@@ -4,72 +4,105 @@ import {
   Activity, 
   Flame, 
   AlertTriangle, 
-  Camera, 
   Layers, 
-  RotateCcw, 
   Play, 
   Pause,
-  Sliders,
+  Bot,
+  Sparkles,
   CheckCircle2,
-  Sparkles
+  HelpCircle,
+  ShieldAlert,
+  GitCommit,
+  Terminal,
+  LineChart
 } from 'lucide-react';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { GUIDED_SCENARIOS } from '@/data/scenarios';
+import { ViewMode } from '@/types';
 
 export const TopNav: React.FC = () => {
   const {
+    activeView,
+    setActiveView,
     activeScenarioId,
     loadScenario,
-    cameraPreset,
-    setCameraPreset,
-    activeFaults,
     thermalTelemetry,
+    activeFaults,
     isAutoRunning,
-    toggleAutoRun,
-    activeView,
-    setActiveView
+    toggleAutoRun
   } = useSimulationStore();
 
-  const isCritical = thermalTelemetry.throttlingActive || activeFaults.length > 0;
+  const isThrottled = thermalTelemetry.throttlingActive || activeFaults.length > 0;
+
+  // Clean, high-level user friendly modes
+  const primaryModes: Array<{ id: ViewMode; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: 'explorer', label: '3D Chip Tour', icon: Cpu },
+    { id: 'dissection', label: 'Explode Layers', icon: Layers },
+    { id: 'signal-flow', label: 'Data & Pipeline', icon: GitCommit },
+    { id: 'instruction-sim', label: 'Assembly Lab', icon: Terminal },
+    { id: 'fault-lab', label: 'Fault Test', icon: ShieldAlert },
+    { id: 'thermal', label: 'Thermal Heat', icon: Flame },
+    { id: 'analytics', label: 'Performance', icon: LineChart }
+  ];
 
   return (
-    <header className="h-14 bg-[#0B1220]/95 border-b border-[#1E2D4A] px-4 flex items-center justify-between z-30 select-none backdrop-blur-md">
-      {/* Brand & Workspace Title */}
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-[#0B1220]/95 border-b border-[#1E2D4A] px-5 flex items-center justify-between select-none z-30 backdrop-blur-md">
+      {/* Brand & Title */}
+      <div className="flex items-center gap-6">
         <div 
-          onClick={() => setActiveView('overview')}
+          onClick={() => setActiveView('explorer')}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="w-8 h-8 rounded bg-[#101A2C] border border-[#00E5FF]/40 flex items-center justify-center text-[#00E5FF] group-hover:border-[#00E5FF] group-hover:shadow-[0_0_12px_rgba(0,229,255,0.4)] transition-all">
-            <Cpu className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-[#101A2C] border border-[#00E5FF]/40 flex items-center justify-center text-[#00E5FF] group-hover:border-[#00E5FF] group-hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition-all">
+            <Cpu className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-wider text-slate-100 group-hover:text-[#00E5FF] transition-colors">
+              <span className="font-bold text-base tracking-wider text-slate-100 group-hover:text-[#00E5FF] transition-colors">
                 SILICON<span className="text-[#00E5FF]">VERSE</span>
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#00E5FF]/10 text-[#00E5FF] font-mono border border-[#00E5FF]/20">
-                DT-X9 PRO
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00E5FF]/10 text-[#00E5FF] font-mono border border-[#00E5FF]/20">
+                Interactive Twin
               </span>
             </div>
-            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5">
-              <span>DIE: QUANTUM-X9</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-emerald-400">4.80 GHz HYPER-CORE</span>
-            </div>
+            <p className="text-[11px] text-slate-400 font-sans hidden sm:block">
+              Explore how computer processors work in 3D
+            </p>
           </div>
         </div>
 
-        {/* Separator */}
-        <div className="h-6 w-px bg-[#1E2D4A] hidden md:block" />
+        {/* Primary Clean Navigation Tabs */}
+        <nav className="hidden xl:flex items-center gap-1 bg-[#101A2C]/80 p-1 rounded-xl border border-[#1E2D4A]">
+          {primaryModes.map((m) => {
+            const Icon = m.icon;
+            const isActive = activeView === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setActiveView(m.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#00E5FF] text-[#070B14] font-semibold shadow-[0_0_12px_rgba(0,229,255,0.3)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#16243D]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{m.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
-        {/* Scenario Quick Selector */}
-        <div className="hidden lg:flex items-center gap-2">
-          <span className="text-xs text-slate-400">Scenario:</span>
+      {/* Right Controls: Guided Demo Selector & Health Status */}
+      <div className="flex items-center gap-3">
+        {/* Guided Demo Dropdown */}
+        <div className="flex items-center gap-2 bg-[#101A2C] px-3 py-1.5 rounded-xl border border-[#1E2D4A]">
+          <span className="text-xs text-slate-400 hidden sm:inline">Guided Tour:</span>
           <select
             value={activeScenarioId || ''}
             onChange={(e) => loadScenario(e.target.value)}
-            className="bg-[#101A2C] border border-[#1E2D4A] hover:border-[#00E5FF]/50 text-xs text-slate-200 rounded px-2.5 py-1 outline-none font-mono focus:border-[#00E5FF] transition-colors cursor-pointer"
+            className="bg-transparent text-xs text-slate-200 font-medium outline-none cursor-pointer"
           >
             {GUIDED_SCENARIOS.map((s) => (
               <option key={s.id} value={s.id} className="bg-[#0B1220] text-slate-200">
@@ -78,117 +111,43 @@ export const TopNav: React.FC = () => {
             ))}
           </select>
         </div>
-      </div>
 
-      {/* Center Live Telemetry Gauges */}
-      <div className="hidden md:flex items-center gap-4 text-xs font-mono">
-        {/* Core Clock */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#101A2C] border border-[#1E2D4A]">
-          <Activity className="w-3.5 h-3.5 text-[#387BFF]" />
-          <span className="text-slate-400">CLK:</span>
-          <span className="text-slate-200 font-semibold">
-            {thermalTelemetry.throttlingActive ? '1.40' : '4.80'} GHz
+        {/* Quick Health & Temperature Status */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#101A2C] border border-[#1E2D4A] text-xs font-mono">
+          <Flame className={`w-3.5 h-3.5 ${thermalTelemetry.maxTemperature >= 85 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`} />
+          <span className="text-slate-300 font-semibold">{thermalTelemetry.maxTemperature.toFixed(0)}°C</span>
+          <span className="text-slate-600">•</span>
+          <span className={isThrottled ? 'text-red-400 font-bold' : 'text-emerald-400 font-semibold'}>
+            {isThrottled ? 'THROTTLED' : 'NOMINAL'}
           </span>
         </div>
 
-        {/* Junction Temp */}
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#101A2C] border ${
-          thermalTelemetry.maxTemperature >= 85 
-            ? 'border-red-500/60 text-red-400 bg-red-950/20' 
-            : 'border-[#1E2D4A] text-slate-200'
-        }`}>
-          <Flame className={`w-3.5 h-3.5 ${thermalTelemetry.maxTemperature >= 85 ? 'text-red-400 animate-pulse' : 'text-[#F59E0B]'}`} />
-          <span className="text-slate-400">TJ:</span>
-          <span className="font-semibold">{thermalTelemetry.maxTemperature.toFixed(1)}°C</span>
-        </div>
-
-        {/* Status Badge */}
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] ${
-          isCritical
-            ? 'bg-red-500/10 border-red-500/40 text-red-400'
-            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-        }`}>
-          {isCritical ? (
-            <>
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>{activeFaults.length > 0 ? `${activeFaults.length} FAULT ACTIVE` : 'THROTTLED'}</span>
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>NOMINAL EFFICIENCY</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Right Controls & Camera Presets */}
-      <div className="flex items-center gap-2">
-        {/* Auto Run Play/Pause */}
+        {/* Continuous Signal Play/Pause */}
         <button
           onClick={toggleAutoRun}
-          title={isAutoRunning ? 'Pause Instruction Stream' : 'Run Instruction Stream'}
-          className={`px-3 py-1.5 rounded text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
             isAutoRunning 
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-              : 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40 hover:bg-[#00E5FF]/30'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+              : 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40'
           }`}
+          title={isAutoRunning ? 'Pause signal animation' : 'Start signal animation'}
         >
           {isAutoRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          <span className="hidden sm:inline">{isAutoRunning ? 'PAUSE' : 'RUN'}</span>
+          <span className="hidden sm:inline">{isAutoRunning ? 'Pause Signal' : 'Play Signal'}</span>
         </button>
 
-        {/* Camera Preset Group */}
-        <div className="flex items-center bg-[#101A2C] border border-[#1E2D4A] rounded p-0.5">
-          <button
-            onClick={() => setCameraPreset('isometric')}
-            title="Isometric View"
-            className={`px-2 py-1 text-[11px] font-mono rounded transition-colors ${
-              cameraPreset === 'isometric' ? 'bg-[#00E5FF]/20 text-[#00E5FF]' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            ISO
-          </button>
-          <button
-            onClick={() => setCameraPreset('top')}
-            title="Top-Down Die View"
-            className={`px-2 py-1 text-[11px] font-mono rounded transition-colors ${
-              cameraPreset === 'top' ? 'bg-[#00E5FF]/20 text-[#00E5FF]' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            TOP
-          </button>
-          <button
-            onClick={() => setCameraPreset('closeup')}
-            title="Core Close-up View"
-            className={`px-2 py-1 text-[11px] font-mono rounded transition-colors ${
-              cameraPreset === 'closeup' ? 'bg-[#00E5FF]/20 text-[#00E5FF]' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            CORE
-          </button>
-          <button
-            onClick={() => setCameraPreset('exploded')}
-            title="Exploded Layer View"
-            className={`px-2 py-1 text-[11px] font-mono rounded transition-colors ${
-              cameraPreset === 'exploded' ? 'bg-[#00E5FF]/20 text-[#00E5FF]' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            STACK
-          </button>
-        </div>
-
-        {/* AI Assistant Quick Pill */}
+        {/* AI Assistant Button */}
         <button
           onClick={() => setActiveView('assistant')}
-          className={`p-1.5 rounded border transition-colors cursor-pointer ${
-            activeView === 'assistant' 
-              ? 'bg-[#8B5CF6]/30 text-[#8B5CF6] border-[#8B5CF6]/60' 
-              : 'bg-[#101A2C] text-slate-300 border-[#1E2D4A] hover:border-[#8B5CF6]/40 hover:text-[#8B5CF6]'
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border ${
+            activeView === 'assistant'
+              ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-[0_0_12px_rgba(139,92,246,0.4)]'
+              : 'bg-[#101A2C] text-[#8B5CF6] border-[#8B5CF6]/40 hover:bg-[#8B5CF6]/10'
           }`}
-          title="Open Engineering Assistant"
+          title="Ask Engineering AI"
         >
-          <Sparkles className="w-4 h-4" />
+          <Bot className="w-4 h-4" />
+          <span className="hidden lg:inline">Ask AI</span>
         </button>
       </div>
     </header>

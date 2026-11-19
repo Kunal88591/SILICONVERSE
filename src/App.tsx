@@ -7,9 +7,7 @@ import { BottomStatus } from '@/components/layout/BottomStatus';
 import { SemiconductorScene } from '@/scenes/SemiconductorScene';
 
 // View Modules
-import { OverviewModule } from '@/modules/overview/OverviewModule';
 import { ExplorerModule } from '@/modules/explorer/ExplorerModule';
-import { ArchitectureStudioModule } from '@/modules/architecture/ArchitectureStudioModule';
 import { DissectionModule } from '@/modules/dissection/DissectionModule';
 import { SignalFlowModule } from '@/modules/signal-flow/SignalFlowModule';
 import { InstructionSimulatorModule } from '@/modules/instruction-simulator/InstructionSimulatorModule';
@@ -18,6 +16,8 @@ import { ThermalAnalysisModule } from '@/modules/thermal-analysis/ThermalAnalysi
 import { PerformanceAnalyticsModule } from '@/modules/analytics/PerformanceAnalyticsModule';
 import { EngineeringAssistantModule } from '@/modules/assistant/EngineeringAssistantModule';
 import { DocsAndScenariosModule } from '@/modules/docs/DocsAndScenariosModule';
+import { ArchitectureStudioModule } from '@/modules/architecture/ArchitectureStudioModule';
+import { OverviewModule } from '@/modules/overview/OverviewModule';
 
 export const App: React.FC = () => {
   const {
@@ -66,7 +66,7 @@ export const App: React.FC = () => {
           </div>
 
           {/* Active View Module Layer */}
-          <div className="relative z-10 w-full h-full overflow-hidden">
+          <div className={`relative z-10 w-full h-full overflow-hidden ${is3DView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
             {activeView === 'overview' && <OverviewModule />}
             {activeView === 'explorer' && <ExplorerModule />}
             {activeView === 'architecture' && <ArchitectureStudioModule />}
@@ -79,10 +79,10 @@ export const App: React.FC = () => {
             {activeView === 'assistant' && <EngineeringAssistantModule />}
             {activeView === 'docs' && <DocsAndScenariosModule />}
           </div>
-        </main>
 
-        {/* Right Contextual Inspector */}
-        <RightInspector />
+          {/* Floating Contextual Inspector (appears smoothly when a component is clicked) */}
+          <RightInspector />
+        </main>
       </div>
 
       {/* 3. BOTTOM STATUS BAR */}

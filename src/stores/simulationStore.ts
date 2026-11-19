@@ -115,7 +115,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => {
   }
 
   return {
-    activeView: 'overview',
+    activeView: 'explorer',
     setActiveView: (view) => set({ activeView: view }),
 
     selectedComponentId: null,

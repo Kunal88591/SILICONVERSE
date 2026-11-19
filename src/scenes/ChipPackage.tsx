@@ -9,7 +9,7 @@ interface ChipPackageProps {
 export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) => {
   const { layerVisibility } = useSimulationStore();
 
-  // Procedural BGA Solder Balls (10x10 grid on bottom of substrate)
+  // Procedural BGA Solder Balls (grid on bottom of substrate)
   const bgaBalls = useMemo(() => {
     const balls: [number, number, number][] = [];
     const count = 12;
@@ -18,10 +18,10 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
 
     for (let x = 0; x < count; x++) {
       for (let z = 0; z < count; z++) {
-        // Exclude central core area under die to resemble real socket layouts
+        // Exclude central area directly under die
         const posX = x * spacing - offset;
         const posZ = z * spacing - offset;
-        if (Math.abs(posX) > 1.4 || Math.abs(posZ) > 1.4) {
+        if (Math.abs(posX) > 1.3 || Math.abs(posZ) > 1.3) {
           balls.push([posX, -0.42, posZ]);
         }
       }
@@ -29,9 +29,9 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
     return balls;
   }, []);
 
-  // Gold bond finger pads along substrate periphery
+  // Gold bond pads along substrate periphery
   const bondPads = useMemo(() => {
-    const pads: [number, number, number, number][] = []; // x, y, z, rotY
+    const pads: [number, number, number, number][] = [];
     const step = 0.55;
     const padCount = 14;
     const span = ((padCount - 1) * step) / 2;
@@ -47,16 +47,14 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
   }, []);
 
   // Compute layer Y offsets based on explodedProgress
-  // Substrate drops downward
   const substrateY = -explodedProgress * 1.8;
-  // Silicon base die sits at middle
   const dieBaseY = 0;
-  // Package heat spreader lid rises upward
-  const lidY = 0.6 + explodedProgress * 3.5;
+  // Lid sits high enough or lifts high so it doesn't block the die view
+  const lidY = 1.2 + explodedProgress * 3.5;
 
   return (
     <group>
-      {/* 1. SUBSTRATE LAYER (Organic / Ceramic PCB carrier) */}
+      {/* 1. SUBSTRATE LAYER (Organic PCB carrier with BGA balls) */}
       {layerVisibility.substrate && (
         <group position={[0, substrateY, 0]}>
           {/* Main PCB substrate plate */}
@@ -64,7 +62,7 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
             <boxGeometry args={[8.8, 0.35, 8.8]} />
             <meshStandardMaterial
               color="#0A2F1D"
-              roughness={0.45}
+              roughness={0.4}
               metalness={0.25}
             />
           </mesh>
@@ -79,7 +77,7 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
             />
           </mesh>
 
-          {/* Gold Pin 1 Corner Alignment Marker */}
+          {/* Gold Pin 1 Marker */}
           <mesh position={[-3.9, 0.03, -3.9]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[0.3, 3]} />
             <meshStandardMaterial
@@ -115,7 +113,7 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
         </group>
       )}
 
-      {/* 2. SILICON DIE BASE LAYER (Substrate Interposer & Silicon Base Plate) */}
+      {/* 2. SILICON DIE BASE LAYER (Substrate Interposer & Monolithic Silicon Base) */}
       {layerVisibility.die && (
         <group position={[0, dieBaseY, 0]}>
           {/* Silicon Interposer Carrier */}
@@ -135,11 +133,10 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
               color="#0F172A"
               roughness={0.12}
               metalness={0.88}
-              wireframe={false}
             />
           </mesh>
 
-          {/* Silicon Die Perimeter Guard Ring (Gold Ground Ring) */}
+          {/* Perimeter Ground Guard Ring */}
           <mesh position={[0, 0.09, 0]}>
             <boxGeometry args={[6.6, 0.02, 6.6]} />
             <meshStandardMaterial
@@ -152,46 +149,30 @@ export const ChipPackage: React.FC<ChipPackageProps> = ({ explodedProgress }) =>
         </group>
       )}
 
-      {/* 3. METALLIC HEAT SPREADER (IHS Package Lid) */}
+      {/* 3. METALLIC HEAT SPREADER (IHS Package Lid - Semi-transparent or elevated so die is visible) */}
       {layerVisibility.package && (
         <group position={[0, lidY, 0]}>
-          {/* Nickel-plated Copper Heat Spreader Main Cap */}
+          {/* Semi-transparent metallic heat spreader with window so internal components are visible */}
           <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
-            <boxGeometry args={[8.0, 0.45, 8.0]} />
+            <boxGeometry args={[8.0, 0.35, 8.0]} />
             <meshStandardMaterial
               color="#475569"
-              metalness={0.92}
-              roughness={0.28}
-            />
-          </mesh>
-
-          {/* Raised Central Core Thermal Contact Plateau */}
-          <mesh position={[0, 0.6, 0]}>
-            <boxGeometry args={[7.2, 0.08, 7.2]} />
-            <meshStandardMaterial
-              color="#334155"
-              metalness={0.85}
-              roughness={0.35}
-            />
-          </mesh>
-
-          {/* Laser-Etched Nameplate Badge */}
-          <mesh position={[0, 0.65, 0]}>
-            <boxGeometry args={[5.2, 0.02, 2.6]} />
-            <meshStandardMaterial
-              color="#1E293B"
-              metalness={0.6}
-              roughness={0.4}
+              metalness={0.9}
+              roughness={0.25}
+              transparent={true}
+              opacity={explodedProgress > 0.05 ? 0.85 : 0.25}
             />
           </mesh>
 
           {/* Outer Package Flange Lip */}
           <mesh position={[0, 0.15, 0]}>
-            <boxGeometry args={[8.4, 0.08, 8.4]} />
+            <boxGeometry args={[8.4, 0.06, 8.4]} />
             <meshStandardMaterial
               color="#334155"
               metalness={0.9}
               roughness={0.3}
+              transparent={true}
+              opacity={explodedProgress > 0.05 ? 0.9 : 0.35}
             />
           </mesh>
         </group>
