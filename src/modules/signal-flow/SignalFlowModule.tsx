@@ -9,7 +9,7 @@ import {
   ArrowRight,
   GitCommit,
   CheckCircle2,
-  AlertCircle
+  Sparkles
 } from 'lucide-react';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { CHIP_COMPONENTS } from '@/data/chipComponents';
@@ -32,69 +32,63 @@ export const SignalFlowModule: React.FC = () => {
     stage: PipelineStage;
     label: string;
     primaryUnit: ChipComponentId;
-    description: string;
     busSignal: string;
   }> = [
     {
       stage: 'FETCH',
-      label: '1. Instruction Fetch',
+      label: 'Fetch',
       primaryUnit: 'pc',
-      description: 'Program Counter delivers address pointer to L1 Instruction Cache. 32-byte instruction block streamed to prefetch buffer.',
-      busSignal: 'PC_OUT[63:0] -> L1I_ADDR_BUS'
+      busSignal: 'PC -> L1I Cache'
     },
     {
       stage: 'DECODE',
-      label: '2. Instruction Decode',
+      label: 'Decode',
       primaryUnit: 'decoder',
-      description: 'Opcode deconstructed into internal RISC micro-operations. Register operand indices parsed and hazard logic asserted.',
-      busSignal: 'L1I_DATA_BUS -> DECODER_OPCODE[31:0]'
+      busSignal: 'L1I -> Decoder'
     },
     {
       stage: 'EXECUTE',
-      label: '3. Execution & ALU',
+      label: 'Execute',
       primaryUnit: 'alu',
-      description: 'Operands extracted from Register File are computed in the 64-bit ALU or Address Generation Unit (AGU).',
-      busSignal: 'REG_RS1 / REG_RS2 -> ALU_IN_A / ALU_IN_B'
+      busSignal: 'Regs -> ALU Core'
     },
     {
       stage: 'MEMORY',
-      label: '4. Memory Access',
+      label: 'Memory',
       primaryUnit: 'l1d',
-      description: 'Loads read requested operands from L1 Data Cache; Stores deposit values into store buffer queues pending retirement.',
-      busSignal: 'ALU_ADDR_OUT -> L1D_SRAM_PORT'
+      busSignal: 'ALU -> L1D / Bus'
     },
     {
       stage: 'WRITEBACK',
-      label: '5. Register Write-Back',
+      label: 'Writeback',
       primaryUnit: 'registers',
-      description: 'Computed arithmetic results or loaded memory data committed into destination architecture register (R0 - R7).',
-      busSignal: 'WB_MUX_OUT -> PRF_WRITE_PORT[63:0]'
+      busSignal: 'Bus -> Reg File'
     }
   ];
 
   const currentInst = executionState.currentInstruction;
 
   return (
-    <div className="absolute inset-0 pointer-events-none select-none z-10 flex flex-col justify-between p-6">
+    <div className="absolute inset-0 pointer-events-none select-none z-10 flex flex-col justify-between p-5">
       {/* Top Floating Pipeline Stages Bar */}
-      <div className="bg-[#0B1220]/95 backdrop-blur-md border border-[#1E2D4A] rounded-xl p-4 shadow-2xl pointer-events-auto max-w-5xl mx-auto w-full space-y-3">
-        <div className="flex items-center justify-between border-b border-[#1E2D4A] pb-2">
+      <div className="bg-[#080D1A]/90 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-4 shadow-2xl pointer-events-auto max-w-4xl mx-auto w-full space-y-3">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
           <div className="flex items-center gap-2">
             <GitCommit className="w-4 h-4 text-[#00E5FF]" />
-            <span className="text-xs font-mono font-bold tracking-wider text-slate-100">
+            <span className="text-xs font-mono font-bold tracking-wider text-white">
               5-STAGE PIPELINE SIGNAL FLOW
             </span>
           </div>
 
           <div className="flex items-center gap-2 font-mono text-xs">
             <span className="text-slate-400">Current Instruction:</span>
-            <span className="px-2 py-0.5 rounded bg-[#101A2C] border border-[#00E5FF]/40 text-[#00E5FF] font-semibold">
-              {currentInst ? currentInst.raw : 'NONE'}
+            <span className="px-2.5 py-0.5 rounded-lg bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] font-bold">
+              {currentInst ? currentInst.raw : 'NOP'}
             </span>
           </div>
         </div>
 
-        {/* Pipeline Stage Indicators */}
+        {/* 5 Stages Grid */}
         <div className="grid grid-cols-5 gap-2">
           {stages.map((st, idx) => {
             const isActive = executionState.currentStage === st.stage;
@@ -106,15 +100,15 @@ export const SignalFlowModule: React.FC = () => {
               <div
                 key={st.stage}
                 onClick={() => setSelectedComponentId(st.primaryUnit)}
-                className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#00E5FF]/15 border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.25)]'
+                    ? 'bg-[#00E5FF]/20 border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.3)]'
                     : isPast
-                    ? 'bg-[#101A2C] border-emerald-500/40 text-slate-300'
-                    : 'bg-[#101A2C]/60 border-[#1E2D4A] text-slate-500'
+                    ? 'bg-white/[0.04] border-emerald-500/40 text-slate-300'
+                    : 'bg-white/[0.02] border-white/[0.06] text-slate-500'
                 }`}
               >
-                <div className="flex items-center justify-between text-[11px] font-mono font-bold">
+                <div className="flex items-center justify-between text-xs font-mono font-bold">
                   <span className={isActive ? 'text-[#00E5FF]' : isPast ? 'text-emerald-400' : 'text-slate-400'}>
                     {st.stage}
                   </span>
@@ -125,7 +119,7 @@ export const SignalFlowModule: React.FC = () => {
                   Unit: {CHIP_COMPONENTS[st.primaryUnit]?.name}
                 </div>
 
-                <div className="text-[9px] font-mono text-slate-500 mt-1 truncate">
+                <div className="text-[9px] font-mono text-slate-500 mt-0.5 truncate">
                   {st.busSignal}
                 </div>
               </div>
@@ -134,38 +128,38 @@ export const SignalFlowModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Floating Step Control Panel */}
-      <div className="bg-[#0B1220]/95 backdrop-blur-md border border-[#1E2D4A] rounded-xl p-4 shadow-2xl pointer-events-auto max-w-2xl mx-auto w-full space-y-3">
+      {/* Bottom Floating Step & Playback Controls Bar */}
+      <div className="bg-[#080D1A]/90 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-3.5 shadow-2xl pointer-events-auto max-w-xl mx-auto w-full space-y-2.5 mb-16">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Play/Pause */}
             <button
               onClick={toggleAutoRun}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                 isAutoRunning
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                  : 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40 hover:bg-[#00E5FF]/30'
+                  : 'bg-[#00E5FF] text-[#050811] font-semibold hover:bg-[#00E5FF]/90 shadow-[0_0_12px_rgba(0,229,255,0.3)]'
               }`}
             >
-              {isAutoRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              <span>{isAutoRunning ? 'PAUSE PIPELINE' : 'RUN CONTINUOUS'}</span>
+              {isAutoRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+              <span>{isAutoRunning ? 'Pause Stream' : 'Run Pipeline'}</span>
             </button>
 
             {/* Step Stage */}
             <button
               onClick={stepPipelineStage}
               disabled={isAutoRunning}
-              className="px-3 py-1.5 rounded-lg bg-[#101A2C] border border-[#1E2D4A] hover:border-[#00E5FF]/50 text-slate-200 text-xs font-mono disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#00E5FF]/50 text-slate-200 text-xs font-medium disabled:opacity-40 flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <SkipForward className="w-3.5 h-3.5 text-[#00E5FF]" />
               <span>Step Stage</span>
             </button>
 
-            {/* Step Instruction */}
+            {/* Step Inst */}
             <button
               onClick={stepFullInstruction}
               disabled={isAutoRunning}
-              className="px-3 py-1.5 rounded-lg bg-[#101A2C] border border-[#1E2D4A] hover:border-[#387BFF]/50 text-slate-200 text-xs font-mono disabled:opacity-40 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#387BFF]/50 text-slate-200 text-xs font-medium disabled:opacity-40 cursor-pointer transition-colors"
             >
               <span>Step Inst</span>
             </button>
@@ -173,7 +167,7 @@ export const SignalFlowModule: React.FC = () => {
             {/* Reset */}
             <button
               onClick={resetExecution}
-              className="p-1.5 rounded-lg bg-[#101A2C] border border-[#1E2D4A] hover:border-slate-400 text-slate-400 hover:text-slate-200 cursor-pointer"
+              className="p-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-slate-400 text-slate-400 hover:text-white cursor-pointer transition-colors"
               title="Reset Execution"
             >
               <RotateCcw className="w-4 h-4" />
@@ -182,8 +176,7 @@ export const SignalFlowModule: React.FC = () => {
 
           {/* Speed slider */}
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>Cycle Delay:</span>
-            <span className="text-[#00E5FF] font-semibold">{executionSpeedMs}ms</span>
+            <span>Delay: {executionSpeedMs}ms</span>
             <input
               type="range"
               min={100}
@@ -196,9 +189,9 @@ export const SignalFlowModule: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Textual Execution Explanation */}
-        <div className="p-2.5 rounded-lg bg-[#070B14] border border-[#1E2D4A] text-xs font-mono text-slate-300 flex items-start gap-2">
-          <span className="text-[#00E5FF] font-semibold">SIGNAL BUS:</span>
+        {/* Live Step Explanation */}
+        <div className="px-3 py-2 rounded-xl bg-black/40 border border-white/[0.06] text-xs text-slate-300 flex items-start gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-[#00E5FF] shrink-0 mt-0.5" />
           <span className="leading-relaxed">{executionState.lastLog}</span>
         </div>
       </div>

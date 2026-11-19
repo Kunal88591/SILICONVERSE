@@ -24,7 +24,7 @@ import {
 import { useSimulationStore } from '@/stores/simulationStore';
 
 export const PerformanceAnalyticsModule: React.FC = () => {
-  const { telemetryHistory, activeScenarioId, loadScenario } = useSimulationStore();
+  const { telemetryHistory, activeScenarioId, loadScenario, setActiveView } = useSimulationStore();
   const [activeTab, setActiveTab] = useState<'charts' | 'benchmark'>('charts');
 
   // Format CSV download
@@ -56,6 +56,15 @@ export const PerformanceAnalyticsModule: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto overflow-y-auto h-full text-slate-200">
+      {/* Return to 3D Chip Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setActiveView('explorer')}
+          className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#00E5FF]/40 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer"
+        >
+          <span>← Back to 3D Chip View</span>
+        </button>
+      </div>
       {/* Top Header */}
       <div className="bg-[#0B1220] border border-[#1E2D4A] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -21,7 +21,8 @@ export const EngineeringAssistantModule: React.FC = () => {
     clearAssistantChat,
     selectedComponentId,
     activeFaults,
-    thermalTelemetry
+    thermalTelemetry,
+    setActiveView
   } = useSimulationStore();
 
   const [inputQuery, setInputQuery] = useState('');
@@ -53,6 +54,15 @@ export const EngineeringAssistantModule: React.FC = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto h-full flex flex-col justify-between text-slate-200">
+      {/* Return to 3D Chip Bar */}
+      <div className="flex items-center justify-between mb-2">
+        <button
+          onClick={() => setActiveView('explorer')}
+          className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-[#00E5FF]/40 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer"
+        >
+          <span>← Back to 3D Chip View</span>
+        </button>
+      </div>
       {/* Top Header */}
       <div className="bg-[#0B1220] border border-[#1E2D4A] rounded-xl p-4 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">

@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { TopNav } from '@/components/layout/TopNav';
-import { LeftNav } from '@/components/layout/LeftNav';
 import { RightInspector } from '@/components/layout/RightInspector';
-import { BottomStatus } from '@/components/layout/BottomStatus';
 import { SemiconductorScene } from '@/scenes/SemiconductorScene';
 
 // View Modules
@@ -16,8 +14,6 @@ import { ThermalAnalysisModule } from '@/modules/thermal-analysis/ThermalAnalysi
 import { PerformanceAnalyticsModule } from '@/modules/analytics/PerformanceAnalyticsModule';
 import { EngineeringAssistantModule } from '@/modules/assistant/EngineeringAssistantModule';
 import { DocsAndScenariosModule } from '@/modules/docs/DocsAndScenariosModule';
-import { ArchitectureStudioModule } from '@/modules/architecture/ArchitectureStudioModule';
-import { OverviewModule } from '@/modules/overview/OverviewModule';
 
 export const App: React.FC = () => {
   const {
@@ -28,7 +24,7 @@ export const App: React.FC = () => {
     executionSpeedMs
   } = useSimulationStore();
 
-  // Background Telemetry Ticker (updates rolling telemetry buffer)
+  // Background Telemetry Ticker
   useEffect(() => {
     const timer = setInterval(() => {
       tickTelemetry();
@@ -45,48 +41,61 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [isAutoRunning, stepPipelineStage, executionSpeedMs]);
 
-  // Determine whether current view is 3D scene dominant
-  const is3DView = activeView === 'explorer' || activeView === 'dissection' || activeView === 'signal-flow';
+  // 3D-centric views where the 3D canvas is full-screen
+  const is3DView = 
+    activeView === 'explorer' || 
+    activeView === 'dissection' || 
+    activeView === 'signal-flow' || 
+    activeView === 'thermal';
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070B14] text-slate-200">
-      {/* 1. TOP NAVIGATION HEADER */}
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#050811] text-slate-100 font-sans antialiased">
+      {/* 1. ULTRA-SLEEK PROFESSIONAL TOP NAVIGATION */}
       <TopNav />
 
-      {/* 2. MAIN HORIZONTAL SHELL */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Left Navigation */}
-        <LeftNav />
+      {/* 2. FULL-VIEWPORT WORKSPACE */}
+      <main className="flex-1 relative w-full h-full overflow-hidden bg-[#050811]">
+        {/* Full-bleed 3D Semiconductor Scene (Always active and visible in 3D views) */}
+        <div className={`w-full h-full absolute inset-0 transition-opacity duration-500 ${is3DView ? 'opacity-100 z-0' : 'opacity-0 pointer-events-none'}`}>
+          <SemiconductorScene />
+        </div>
 
-        {/* Central Workspace */}
-        <main className="flex-1 relative overflow-hidden bg-[#070B14] flex flex-col">
-          {/* Always-mounted 3D Scene (preserves WebGL context and camera state) */}
-          <div className={`w-full h-full absolute inset-0 ${is3DView ? 'z-0' : 'hidden pointer-events-none'}`}>
-            <SemiconductorScene />
+        {/* Floating Contextual Modules Layer */}
+        {activeView === 'explorer' && <ExplorerModule />}
+        {activeView === 'dissection' && <DissectionModule />}
+        {activeView === 'signal-flow' && <SignalFlowModule />}
+        {activeView === 'thermal' && <ThermalAnalysisModule />}
+
+        {/* Dedicated Fullscreen Lab Views (Clean glass cards with back button to 3D) */}
+        {activeView === 'instruction-sim' && (
+          <div className="relative z-10 w-full h-full bg-[#050811]/95 backdrop-blur-xl overflow-y-auto">
+            <InstructionSimulatorModule />
           </div>
-
-          {/* Active View Module Layer */}
-          <div className={`relative z-10 w-full h-full overflow-hidden ${is3DView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
-            {activeView === 'overview' && <OverviewModule />}
-            {activeView === 'explorer' && <ExplorerModule />}
-            {activeView === 'architecture' && <ArchitectureStudioModule />}
-            {activeView === 'dissection' && <DissectionModule />}
-            {activeView === 'signal-flow' && <SignalFlowModule />}
-            {activeView === 'instruction-sim' && <InstructionSimulatorModule />}
-            {activeView === 'fault-lab' && <FaultLabModule />}
-            {activeView === 'thermal' && <ThermalAnalysisModule />}
-            {activeView === 'analytics' && <PerformanceAnalyticsModule />}
-            {activeView === 'assistant' && <EngineeringAssistantModule />}
-            {activeView === 'docs' && <DocsAndScenariosModule />}
+        )}
+        {activeView === 'fault-lab' && (
+          <div className="relative z-10 w-full h-full bg-[#050811]/95 backdrop-blur-xl overflow-y-auto">
+            <FaultLabModule />
           </div>
+        )}
+        {activeView === 'analytics' && (
+          <div className="relative z-10 w-full h-full bg-[#050811]/95 backdrop-blur-xl overflow-y-auto">
+            <PerformanceAnalyticsModule />
+          </div>
+        )}
+        {activeView === 'assistant' && (
+          <div className="relative z-10 w-full h-full bg-[#050811]/95 backdrop-blur-xl overflow-y-auto">
+            <EngineeringAssistantModule />
+          </div>
+        )}
+        {activeView === 'docs' && (
+          <div className="relative z-10 w-full h-full bg-[#050811]/95 backdrop-blur-xl overflow-y-auto">
+            <DocsAndScenariosModule />
+          </div>
+        )}
 
-          {/* Floating Contextual Inspector (appears smoothly when a component is clicked) */}
-          <RightInspector />
-        </main>
-      </div>
-
-      {/* 3. BOTTOM STATUS BAR */}
-      <BottomStatus />
+        {/* Right Contextual Component Dossier (Appears only when clicked) */}
+        <RightInspector />
+      </main>
     </div>
   );
 };

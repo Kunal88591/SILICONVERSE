@@ -15,9 +15,9 @@ import {
   ZoomOut, 
   RotateCcw, 
   Compass, 
-  Eye, 
   Layers, 
-  HelpCircle 
+  HelpCircle,
+  Eye
 } from 'lucide-react';
 
 interface CameraDirectorProps {
@@ -25,11 +25,11 @@ interface CameraDirectorProps {
   isAutoRotate: boolean;
 }
 
-const CameraDirector: React.FC<CameraDirectorProps> = ({ controlsRef, isAutoRotate }) => {
+const CameraDirector: React.FC<CameraDirectorProps> = ({ controlsRef }) => {
   const { cameraPreset, selectedComponentId } = useSimulationStore();
   const { camera } = useThree();
 
-  const targetPos = useRef(new THREE.Vector3(9.5, 10.5, 9.5));
+  const targetPos = useRef(new THREE.Vector3(8.0, 8.5, 8.0));
   const targetLook = useRef(new THREE.Vector3(0, 0, 0));
   const isTransitioning = useRef(false);
   const transitionStart = useRef(0);
@@ -41,43 +41,42 @@ const CameraDirector: React.FC<CameraDirectorProps> = ({ controlsRef, isAutoRota
     if (selectedComponentId && CHIP_COMPONENTS[selectedComponentId]) {
       const meta = CHIP_COMPONENTS[selectedComponentId];
       targetLook.current.set(meta.position[0], meta.position[1], meta.position[2]);
-      targetPos.current.set(meta.position[0] + 3.2, meta.position[1] + 4.2, meta.position[2] + 3.5);
+      targetPos.current.set(meta.position[0] + 2.8, meta.position[1] + 3.6, meta.position[2] + 3.0);
       return;
     }
 
     switch (cameraPreset) {
       case 'top':
-        targetPos.current.set(0, 14, 0.001);
+        targetPos.current.set(0, 12, 0.001);
         targetLook.current.set(0, 0, 0);
         break;
       case 'closeup':
-        targetPos.current.set(0, 4.2, 4.5);
-        targetLook.current.set(0, 0.3, 0);
+        targetPos.current.set(0, 3.6, 3.8);
+        targetLook.current.set(0, 0.2, 0);
         break;
       case 'exploded':
-        targetPos.current.set(11, 13, 11);
-        targetLook.current.set(0, 1.2, 0);
+        targetPos.current.set(9.5, 11, 9.5);
+        targetLook.current.set(0, 0.8, 0);
         break;
       case 'isometric':
       case 'reset':
       default:
-        targetPos.current.set(9.5, 10.5, 9.5);
+        targetPos.current.set(8.0, 8.5, 8.0);
         targetLook.current.set(0, 0, 0);
         break;
     }
   }, [cameraPreset, selectedComponentId]);
 
   useFrame(() => {
-    // Only interpolate camera when an explicit preset or selection change was triggered
-    // and stop immediately after 750ms so user has 100% full OrbitControls freedom!
+    // Only animate camera position during explicit transitions for 600ms, then hand 100% control to OrbitControls!
     if (isTransitioning.current) {
       const elapsed = performance.now() - transitionStart.current;
-      if (elapsed > 750) {
+      if (elapsed > 600) {
         isTransitioning.current = false;
       } else {
-        camera.position.lerp(targetPos.current, 0.08);
+        camera.position.lerp(targetPos.current, 0.1);
         if (controlsRef.current) {
-          controlsRef.current.target.lerp(targetLook.current, 0.08);
+          controlsRef.current.target.lerp(targetLook.current, 0.1);
           controlsRef.current.update();
         }
       }
@@ -92,8 +91,7 @@ export const SemiconductorScene: React.FC = () => {
     explodedProgress, 
     setSelectedComponentId, 
     cameraPreset, 
-    setCameraPreset,
-    selectedComponentId 
+    setCameraPreset 
   } = useSimulationStore();
 
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
@@ -103,7 +101,7 @@ export const SemiconductorScene: React.FC = () => {
   const handleZoomIn = () => {
     if (controlsRef.current) {
       const camera = controlsRef.current.object;
-      camera.position.multiplyScalar(0.8);
+      camera.position.multiplyScalar(0.82);
       controlsRef.current.update();
     }
   };
@@ -112,7 +110,7 @@ export const SemiconductorScene: React.FC = () => {
   const handleZoomOut = () => {
     if (controlsRef.current) {
       const camera = controlsRef.current.object;
-      camera.position.multiplyScalar(1.2);
+      camera.position.multiplyScalar(1.22);
       controlsRef.current.update();
     }
   };
@@ -123,7 +121,7 @@ export const SemiconductorScene: React.FC = () => {
     setSelectedComponentId(null);
     if (controlsRef.current) {
       controlsRef.current.target.set(0, 0, 0);
-      controlsRef.current.object.position.set(9.5, 10.5, 9.5);
+      controlsRef.current.object.position.set(8.0, 8.5, 8.0);
       controlsRef.current.update();
     }
   };
@@ -133,51 +131,52 @@ export const SemiconductorScene: React.FC = () => {
       {/* 3D Canvas */}
       <Canvas
         shadows
-        camera={{ position: [9.5, 10.5, 9.5], fov: 42 }}
+        camera={{ position: [8.0, 8.5, 8.0], fov: 40 }}
         className="w-full h-full cursor-grab active:cursor-grabbing"
         onPointerMissed={() => setSelectedComponentId(null)}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        <color attach="background" args={['#070B14']} />
+        <color attach="background" args={['#050811']} />
         
-        {/* Engineering atmosphere fog */}
-        <fog attach="fog" args={['#070B14', 18, 42]} />
+        {/* Soft engineering atmosphere fog */}
+        <fog attach="fog" args={['#050811', 20, 50]} />
 
-        {/* Studio Lighting */}
-        <ambientLight intensity={0.65} color="#CFE2FF" />
+        {/* Studio Lighting Setup */}
+        <ambientLight intensity={0.75} color="#D8E8FF" />
 
+        {/* Top Key Light */}
         <directionalLight
-          position={[7, 16, 9]}
-          intensity={1.6}
+          position={[8, 18, 10]}
+          intensity={1.8}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
           shadow-camera-near={0.5}
-          shadow-camera-far={40}
-          shadow-camera-left={-7}
-          shadow-camera-right={7}
-          shadow-camera-top={7}
-          shadow-camera-bottom={-7}
+          shadow-camera-far={45}
+          shadow-camera-left={-8}
+          shadow-camera-right={8}
+          shadow-camera-top={8}
+          shadow-camera-bottom={-8}
           color="#FFFFFF"
         />
 
-        {/* Back and side rim lights */}
-        <directionalLight position={[-9, 7, -9]} intensity={1.2} color="#387BFF" />
-        <directionalLight position={[0, -6, 0]} intensity={0.35} color="#00E5FF" />
-        <pointLight position={[0, 4, 0]} intensity={0.8} color="#00E5FF" distance={15} />
+        {/* Electric Blue and Cyan Rim Backlights */}
+        <directionalLight position={[-10, 8, -10]} intensity={1.4} color="#387BFF" />
+        <directionalLight position={[0, -6, 0]} intensity={0.4} color="#00E5FF" />
+        <pointLight position={[0, 4.5, 0]} intensity={1.0} color="#00E5FF" distance={16} />
 
-        {/* Studio Technical Floor Grid */}
+        {/* Studio Technical Floor Grid (with valid 6-char hex colors) */}
         <Grid
-          position={[0, -1.8 - explodedProgress * 1.8, 0]}
+          position={[0, -1.6 - explodedProgress * 1.8, 0]}
           args={[32, 32]}
           cellSize={0.8}
           cellThickness={0.8}
-          cellColor="#101F3B"
+          cellColor="#0D182E"
           sectionSize={4}
           sectionThickness={1.2}
-          sectionColor="#00E5FF25"
+          sectionColor="#142B52"
           fadeDistance={28}
-          fadeStrength={1.5}
+          fadeStrength={1.4}
         />
 
         {/* 3D Chip Subsystem */}
@@ -188,7 +187,7 @@ export const SemiconductorScene: React.FC = () => {
           <ThermalOverlay />
         </group>
 
-        {/* Fully responsive OrbitControls */}
+        {/* Highly responsive OrbitControls */}
         <OrbitControls
           ref={controlsRef}
           makeDefault
@@ -197,7 +196,7 @@ export const SemiconductorScene: React.FC = () => {
           rotateSpeed={0.9}
           zoomSpeed={1.2}
           panSpeed={0.8}
-          minDistance={2.5}
+          minDistance={2.0}
           maxDistance={35}
           maxPolarAngle={Math.PI / 2 + 0.05}
           autoRotate={isAutoRotate}
@@ -207,84 +206,78 @@ export const SemiconductorScene: React.FC = () => {
         <CameraDirector controlsRef={controlsRef} isAutoRotate={isAutoRotate} />
       </Canvas>
 
-      {/* Floating On-Screen 3D Interaction Toolbar */}
-      <div className="absolute bottom-6 left-6 z-20 flex items-center gap-2 bg-[#0B1220]/90 backdrop-blur-md p-1.5 rounded-xl border border-[#1E2D4A] shadow-2xl">
-        {/* Rotate / Auto-Spin Toggle */}
+      {/* Floating Centered Bottom 3D Toolbar (Apple/Figma/Spline style) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#080D1A]/90 backdrop-blur-2xl px-3 py-2 rounded-2xl border border-white/[0.1] shadow-2xl">
+        {/* Auto Rotate Toggle */}
         <button
           onClick={() => setIsAutoRotate(!isAutoRotate)}
-          className={`px-3 py-2 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
             isAutoRotate
-              ? 'bg-[#00E5FF] text-[#070B14] shadow-[0_0_12px_rgba(0,229,255,0.4)]'
-              : 'text-slate-300 hover:text-white hover:bg-[#101A2C]'
+              ? 'bg-[#00E5FF] text-[#050811] font-semibold shadow-[0_0_12px_rgba(0,229,255,0.4)]'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
           }`}
-          title="Toggle Auto-Rotation"
+          title="Toggle Smooth Auto-Rotation"
         >
           <RotateCw className={`w-3.5 h-3.5 ${isAutoRotate ? 'animate-spin' : ''}`} />
           <span>{isAutoRotate ? 'Rotating' : 'Auto Rotate'}</span>
         </button>
 
-        <div className="w-px h-5 bg-[#1E2D4A]" />
+        <div className="w-px h-5 bg-white/[0.1] mx-1" />
 
-        {/* Zoom In Button */}
+        {/* Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#101A2C] transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           title="Zoom In"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
 
-        {/* Zoom Out Button */}
+        {/* Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#101A2C] transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           title="Zoom Out"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
 
-        {/* Reset Camera Button */}
+        {/* Reset Camera */}
         <button
           onClick={handleReset}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-[#101A2C] transition-colors cursor-pointer"
-          title="Reset Camera Position"
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+          title="Reset Camera View"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-5 bg-[#1E2D4A]" />
+        <div className="w-px h-5 bg-white/[0.1] mx-1" />
 
-        {/* Quick Camera Angles */}
+        {/* Camera Angle Presets */}
         <button
           onClick={() => setCameraPreset('isometric')}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
+          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
             cameraPreset === 'isometric' ? 'bg-[#387BFF]/20 text-[#387BFF] font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          3D Angle
+          Isometric
         </button>
         <button
           onClick={() => setCameraPreset('top')}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
+          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
             cameraPreset === 'top' ? 'bg-[#387BFF]/20 text-[#387BFF] font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Top View
+          Top-Down
         </button>
         <button
           onClick={() => setCameraPreset('closeup')}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
+          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
             cameraPreset === 'closeup' ? 'bg-[#387BFF]/20 text-[#387BFF] font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           Core Focus
         </button>
-      </div>
-
-      {/* Floating User-Friendly Navigation Tip */}
-      <div className="absolute top-4 left-6 z-20 pointer-events-none hidden sm:flex items-center gap-2 bg-[#0B1220]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-[#1E2D4A]/60 text-xs text-slate-400 font-mono shadow-lg">
-        <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-        <span>Drag to rotate • Scroll to zoom • Click any chip part to inspect</span>
       </div>
     </div>
   );
